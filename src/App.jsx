@@ -1,9 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Gift, Users, TrendingUp, Settings, Check, X, Sparkles, Trophy, Crown, Star, Zap, ChevronRight, LogOut, HelpCircle, Copy } from 'lucide-react';
 
-// Modern 2025 Styles
+// Telegram WebApp integration
+const getTelegramWebApp = () => window.Telegram?.WebApp || null;
+const getTelegramUser = () => {
+  const tg = getTelegramWebApp();
+  return tg?.initDataUnsafe?.user || null;
+};
+const hapticFeedback = (type = 'light') => {
+  const tg = getTelegramWebApp();
+  if (tg?.HapticFeedback) {
+    tg.HapticFeedback.impactOccurred(type);
+  }
+};
+
+// Modern 2025 Styles - Fixed fonts and improved design
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   
   * {
     margin: 0;
@@ -12,92 +25,105 @@ const styles = `
   }
   
   body {
-    font-family: 'Space Grotesk', sans-serif;
-    background: #0a0a0a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #000;
     color: #fff;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
-  .title-font {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-  
-  .bg-primary {
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-  }
-  
-  .text-gradient {
+  .gradient-text {
     background: linear-gradient(135deg, #FFB800 0%, #FF6B00 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
-  .card-modern {
-    background: linear-gradient(135deg, rgba(255, 184, 0, 0.05) 0%, rgba(255, 107, 0, 0.05) 100%);
+  .card-glass {
+    background: linear-gradient(135deg, rgba(255, 184, 0, 0.08) 0%, rgba(255, 107, 0, 0.08) 100%);
     border: 1px solid rgba(255, 184, 0, 0.2);
     backdrop-filter: blur(20px);
   }
   
-  .btn-primary {
+  .btn-gradient {
     background: linear-gradient(135deg, #FFB800 0%, #FF6B00 100%);
-    color: #0a0a0a;
+    color: #000;
     font-weight: 700;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    cursor: pointer;
   }
   
-  .btn-primary:hover {
+  .btn-gradient:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 20px 40px rgba(255, 184, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(255, 184, 0, 0.4);
   }
   
-  .btn-secondary {
-    background: rgba(255, 184, 0, 0.1);
-    border: 1px solid rgba(255, 184, 0, 0.3);
+  .btn-gradient:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  .btn-outline {
+    background: transparent;
+    border: 2px solid rgba(255, 184, 0, 0.3);
     color: #FFB800;
+    font-weight: 600;
     transition: all 0.3s;
+    cursor: pointer;
   }
   
-  .btn-secondary:hover {
-    background: rgba(255, 184, 0, 0.2);
+  .btn-outline:hover:not(:disabled) {
+    background: rgba(255, 184, 0, 0.1);
     border-color: #FFB800;
   }
   
-  @keyframes slideLeft {
-    from { transform: translateX(100%); }
-    to { transform: translateX(-100%); }
+  .sharp-corner {
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  }
+  
+  .sharp-corner-alt {
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  
+  @keyframes slideInfinite {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
   }
   
   @keyframes glow {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.6; }
   }
   
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
   
   .animate-slide {
-    animation: slideLeft 20s linear infinite;
+    animation: slideInfinite 15s linear infinite;
   }
   
   .animate-glow {
     animation: glow 2s ease-in-out infinite;
   }
   
-  .clip-sharp {
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
   }
   
-  .clip-corner {
-    clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
-  }
-  
-  input:focus {
+  input:focus, textarea:focus {
     outline: none;
+  }
+  
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
   }
   
   .scroll-hide::-webkit-scrollbar {
@@ -107,6 +133,11 @@ const styles = `
   .scroll-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -187,31 +218,43 @@ const Onboarding = ({ onComplete }) => {
   const handleComplete = async () => {
     if (!validateEVM(evmAddress) || !twitterUsername) return;
     
+    hapticFeedback('medium');
     setLoading(true);
     await new Promise(r => setTimeout(r, 1000));
     onComplete({ evmAddress, twitterUsername });
   };
   
   return (
-    <div className="min-h-screen bg-primary flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <style>{styles}</style>
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Zap className="w-16 h-16 mx-auto mb-4 text-gradient" style={{filter: 'drop-shadow(0 0 20px rgba(255, 184, 0, 0.5))'}} />
-          <h1 className="title-font text-5xl mb-2">
-            <span className="text-gradient">KABBALAH</span>
+        {/* Logo */}
+        <div className="text-center mb-12 animate-float">
+          <Zap className="w-20 h-20 mx-auto mb-6" style={{
+            filter: 'drop-shadow(0 0 30px rgba(255, 184, 0, 0.8))',
+            color: '#FFB800'
+          }} />
+          <h1 className="text-5xl font-black mb-2 gradient-text" style={{letterSpacing: '-0.02em'}}>
+            KABBALAH
           </h1>
-          <h2 className="title-font text-3xl text-white">CODE</h2>
+          <h2 className="text-3xl font-black text-white" style={{letterSpacing: '-0.01em'}}>
+            CODE
+          </h2>
+          <p className="text-gray-400 mt-3 text-sm">Mystical Web3 Rewards</p>
         </div>
         
-        <div className="card-modern clip-sharp p-8">
+        <div className="card-glass sharp-corner p-8">
+          {/* Progress */}
           <div className="flex gap-2 mb-8">
             {[1, 2].map(i => (
               <div
                 key={i}
-                className={`h-1 flex-1 ${
-                  i <= step ? 'bg-gradient-to-r from-[#FFB800] to-[#FF6B00]' : 'bg-gray-800'
-                }`}
+                className="h-1 flex-1 transition-all duration-300"
+                style={{
+                  background: i <= step 
+                    ? 'linear-gradient(90deg, #FFB800 0%, #FF6B00 100%)' 
+                    : 'rgba(255, 255, 255, 0.1)'
+                }}
               />
             ))}
           </div>
@@ -219,7 +262,7 @@ const Onboarding = ({ onComplete }) => {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-[#FFB800] mb-2 text-sm font-semibold uppercase tracking-wider">
+                <label className="block text-[#FFB800] mb-3 text-sm font-bold uppercase tracking-wider">
                   EVM Wallet Address
                 </label>
                 <input
@@ -227,19 +270,20 @@ const Onboarding = ({ onComplete }) => {
                   value={evmAddress}
                   onChange={(e) => setEvmAddress(e.target.value)}
                   placeholder="0x..."
-                  className="w-full bg-black/50 border border-[#FFB800]/30 px-4 py-4 text-white focus:border-[#FFB800] transition-all clip-corner"
+                  className="w-full bg-black/50 border-2 border-[#FFB800]/30 sharp-corner px-4 py-4 text-white font-medium focus:border-[#FFB800] transition-all"
+                  style={{fontSize: '16px'}}
                 />
                 {evmAddress && !validateEVM(evmAddress) && (
-                  <p className="text-red-500 text-xs mt-2">Invalid address format</p>
+                  <p className="text-red-500 text-xs mt-2 font-medium">Invalid address format</p>
                 )}
               </div>
               
               <button
                 onClick={() => setStep(2)}
                 disabled={!validateEVM(evmAddress)}
-                className="w-full btn-primary py-4 clip-sharp disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full btn-gradient sharp-corner py-4 text-base font-bold flex items-center justify-center gap-2"
               >
-                CONTINUE <ChevronRight className="inline ml-2" size={20} />
+                CONTINUE <ChevronRight size={20} />
               </button>
             </div>
           )}
@@ -247,7 +291,7 @@ const Onboarding = ({ onComplete }) => {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-[#FFB800] mb-2 text-sm font-semibold uppercase tracking-wider">
+                <label className="block text-[#FFB800] mb-3 text-sm font-bold uppercase tracking-wider">
                   Twitter Username
                 </label>
                 <input
@@ -255,23 +299,24 @@ const Onboarding = ({ onComplete }) => {
                   value={twitterUsername}
                   onChange={(e) => setTwitterUsername(e.target.value.replace('@', ''))}
                   placeholder="username"
-                  className="w-full bg-black/50 border border-[#FFB800]/30 px-4 py-4 text-white focus:border-[#FFB800] transition-all clip-corner"
+                  className="w-full bg-black/50 border-2 border-[#FFB800]/30 sharp-corner px-4 py-4 text-white font-medium focus:border-[#FFB800] transition-all"
+                  style={{fontSize: '16px'}}
                 />
               </div>
               
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 btn-secondary py-4 clip-sharp"
+                  className="flex-1 btn-outline sharp-corner py-4 text-base font-bold"
                 >
                   BACK
                 </button>
                 <button
                   onClick={handleComplete}
                   disabled={!twitterUsername || loading}
-                  className="flex-1 btn-primary py-4 clip-sharp disabled:opacity-50"
+                  className="flex-1 btn-gradient sharp-corner py-4 text-base font-bold"
                 >
-                  {loading ? 'LOADING...' : 'BEGIN RITUAL'}
+                  {loading ? 'LOADING...' : 'BEGIN'}
                 </button>
               </div>
             </div>
@@ -297,6 +342,7 @@ const DailyPrediction = ({ onClaim }) => {
   }, []);
   
   const handleVerify = async () => {
+    hapticFeedback('success');
     setVerifying(true);
     const result = await API.verifyCode(code);
     if (result.success) {
@@ -306,6 +352,7 @@ const DailyPrediction = ({ onClaim }) => {
   };
   
   const generateTweet = () => {
+    hapticFeedback('light');
     const text = `Got my daily prediction from Kabbalah Code! 🔮✨
 
 ${prediction.text}
@@ -320,22 +367,26 @@ Verification Code: ${prediction.code}
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-16 h-16 border-4 border-[#FFB800] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-16 h-16 border-4 border-[#FFB800] border-t-transparent rounded-full animate-spin" style={{animation: 'spin 1s linear infinite'}}></div>
       </div>
     );
   }
   
   return (
     <div className="space-y-4">
-      <div className="card-modern clip-sharp p-6">
-        <div className="aspect-square rounded-lg overflow-hidden mb-4 border border-[#FFB800]/30">
-          <img src={prediction.imageUrl} alt="Prediction Art" className="w-full h-full object-cover" />
+      <div className="card-glass sharp-corner p-6">
+        <div className="aspect-square rounded-xl overflow-hidden mb-6 border-2 border-[#FFB800]/30">
+          <img src={prediction.imageUrl} alt="Prediction" className="w-full h-full object-cover" />
         </div>
-        <p className="text-white text-lg leading-relaxed mb-6">{prediction.text}</p>
+        
+        <p className="text-white text-lg leading-relaxed mb-6 font-medium">
+          {prediction.text}
+        </p>
         
         <button
           onClick={generateTweet}
-          className="w-full bg-[#1DA1F2] text-white font-bold py-4 clip-sharp hover:bg-[#1a8cd8] transition-all mb-4"
+          className="w-full py-4 sharp-corner font-bold text-base mb-4"
+          style={{background: '#1DA1F2', color: 'white'}}
         >
           SHARE ON TWITTER
         </button>
@@ -346,15 +397,16 @@ Verification Code: ${prediction.code}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="Enter code from tweet"
-            className="w-full bg-black/50 border border-[#FFB800]/30 px-4 py-3 text-white focus:border-[#FFB800] clip-corner"
+            className="w-full bg-black/50 border-2 border-[#FFB800]/30 sharp-corner px-4 py-4 text-white font-medium focus:border-[#FFB800]"
+            style={{fontSize: '16px'}}
           />
           
           <button
             onClick={handleVerify}
             disabled={!code || verifying}
-            className="w-full btn-primary py-4 clip-sharp disabled:opacity-50"
+            className="w-full btn-gradient sharp-corner py-4 text-base font-bold"
           >
-            {verifying ? 'VERIFYING...' : 'VERIFY & EARN +100 POINTS'}
+            {verifying ? 'VERIFYING...' : 'VERIFY & EARN +100 PTS'}
           </button>
         </div>
       </div>
@@ -369,6 +421,7 @@ const RunningTape = ({ onSpin }) => {
   const prizes = [50, 100, 150, 200, 500, 1000, 50, 100, 150, 200];
   
   const handleSpin = async () => {
+    hapticFeedback('medium');
     setSpinning(true);
     setResult(null);
     
@@ -377,26 +430,29 @@ const RunningTape = ({ onSpin }) => {
     setTimeout(() => {
       setResult(data.points);
       setSpinning(false);
+      hapticFeedback('success');
       onSpin(data.points);
     }, 2000);
   };
   
   return (
-    <div className="card-modern clip-sharp p-6">
-      <h2 className="title-font text-2xl text-gradient mb-6 text-center">FORTUNE TAPE</h2>
+    <div className="card-glass sharp-corner p-6">
+      <h2 className="text-2xl font-black text-center mb-6 gradient-text">
+        FORTUNE TAPE
+      </h2>
       
-      <div className="relative h-32 overflow-hidden mb-6 border border-[#FFB800]/30 clip-corner bg-black/50">
-        <div className="absolute inset-0 flex items-center">
-          <div className={`flex gap-4 ${spinning ? 'animate-slide' : ''}`}>
-            {[...prizes, ...prizes, ...prizes].map((prize, i) => (
+      <div className="relative h-32 overflow-hidden mb-6 border-2 border-[#FFB800]/30 sharp-corner" style={{background: 'rgba(0,0,0,0.5)'}}>
+        <div className="absolute inset-0 flex items-center gap-4" style={{paddingLeft: spinning ? 0 : '50%'}}>
+          <div className={`flex gap-4 ${spinning ? 'animate-slide' : ''}`} style={{minWidth: '200%'}}>
+            {[...prizes, ...prizes].map((prize, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 w-24 h-24 flex items-center justify-center border border-[#FFB800]/50 clip-sharp"
+                className="flex-shrink-0 w-24 h-24 flex items-center justify-center border-2 border-[#FFB800]/50 sharp-corner"
                 style={{
                   background: 'linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(255, 107, 0, 0.1) 100%)'
                 }}
               >
-                <span className="text-3xl font-bold text-gradient">{prize}</span>
+                <span className="text-3xl font-black gradient-text">{prize}</span>
               </div>
             ))}
           </div>
@@ -406,15 +462,16 @@ const RunningTape = ({ onSpin }) => {
       </div>
       
       {result && (
-        <div className="text-center mb-4">
-          <p className="text-4xl font-bold text-gradient">+{result} POINTS!</p>
+        <div className="text-center mb-4 animate-float">
+          <p className="text-5xl font-black gradient-text">+{result}</p>
+          <p className="text-gray-400 text-sm mt-1">POINTS</p>
         </div>
       )}
       
       <button
         onClick={handleSpin}
         disabled={spinning}
-        className="w-full btn-primary py-4 clip-sharp disabled:opacity-50"
+        className="w-full btn-gradient sharp-corner py-4 text-base font-bold"
       >
         {spinning ? 'SPINNING...' : 'SPIN (1/DAY)'}
       </button>
@@ -429,11 +486,11 @@ const FAQ = () => {
   const faqs = [
     {
       q: "What is Kabbalah Code?",
-      a: "Kabbalah Code is a Web3-powered mystical prediction platform that combines ancient Kabbalistic wisdom with modern blockchain technology."
+      a: "A Web3-powered mystical prediction platform combining ancient Kabbalistic wisdom with modern blockchain technology."
     },
     {
       q: "How do I earn points?",
-      a: "Earn points through daily predictions, sharing on Twitter, spinning the Fortune Tape, and referring friends. Complete tasks for bonus points!"
+      a: "Through daily predictions, sharing on Twitter, spinning the Fortune Tape, and referring friends. Complete tasks for bonus points!"
     },
     {
       q: "What are referral levels?",
@@ -451,21 +508,25 @@ const FAQ = () => {
   
   return (
     <div className="space-y-3">
-      <h2 className="title-font text-2xl text-gradient mb-6">FAQ</h2>
+      <h2 className="text-2xl font-black mb-6 gradient-text">FAQ</h2>
       {faqs.map((faq, i) => (
-        <div key={i} className="card-modern clip-sharp overflow-hidden">
+        <div key={i} className="card-glass sharp-corner overflow-hidden">
           <button
-            onClick={() => setOpenIndex(openIndex === i ? null : i)}
+            onClick={() => {
+              hapticFeedback('light');
+              setOpenIndex(openIndex === i ? null : i);
+            }}
             className="w-full p-4 flex justify-between items-center text-left"
           >
-            <span className="font-semibold text-white">{faq.q}</span>
+            <span className="font-bold text-white pr-4">{faq.q}</span>
             <ChevronRight 
-              className={`text-[#FFB800] transition-transform ${openIndex === i ? 'rotate-90' : ''}`} 
+              className="text-[#FFB800] transition-transform flex-shrink-0" 
+              style={{transform: openIndex === i ? 'rotate(90deg)' : 'rotate(0deg)'}}
               size={20} 
             />
           </button>
           {openIndex === i && (
-            <div className="px-4 pb-4 text-gray-400">
+            <div className="px-4 pb-4 text-gray-300 leading-relaxed">
               {faq.a}
             </div>
           )}
@@ -478,174 +539,26 @@ const FAQ = () => {
 // Admin Panel
 const AdminPanel = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('tasks');
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'Retweet announcement', points: 50, type: 'retweet' },
-    { id: 2, title: 'Write article', points: 500, type: 'article' }
-  ]);
-  
-  const [ugcSubmissions, setUgcSubmissions] = useState([
-    { id: 1, user: 'seeker_123', type: 'video', url: 'https://youtube.com/...', status: 'pending' },
-    { id: 2, user: 'seeker_456', type: 'article', url: 'https://medium.com/...', status: 'pending' }
-  ]);
-  
-  const tabs = [
-    { id: 'tasks', label: 'Tasks', icon: Settings },
-    { id: 'ugc', label: 'Moderation', icon: Camera },
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'tape', label: 'Tape Config', icon: Gift }
-  ];
-  
-  const approveSubmission = (id) => {
-    setUgcSubmissions(prev => prev.map(s => 
-      s.id === id ? { ...s, status: 'approved' } : s
-    ));
-  };
-  
-  const rejectSubmission = (id) => {
-    setUgcSubmissions(prev => prev.map(s => 
-      s.id === id ? { ...s, status: 'rejected' } : s
-    ));
-  };
   
   return (
-    <div className="min-h-screen bg-primary p-4">
+    <div className="min-h-screen bg-black p-4">
       <style>{styles}</style>
       
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="title-font text-3xl text-gradient">ADMIN PANEL</h1>
+          <h1 className="text-3xl font-black gradient-text">ADMIN PANEL</h1>
           <button
             onClick={onLogout}
-            className="btn-secondary px-4 py-2 clip-sharp flex items-center gap-2"
+            className="btn-outline px-6 py-3 sharp-corner flex items-center gap-2 text-sm font-bold"
           >
             <LogOut size={18} />
             LOGOUT
           </button>
         </div>
         
-        <div className="flex gap-2 mb-6 overflow-x-auto scroll-hide">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 clip-sharp font-bold transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'btn-primary'
-                  : 'btn-secondary'
-              }`}
-            >
-              <tab.icon size={20} />
-              {tab.label}
-            </button>
-          ))}
+        <div className="card-glass sharp-corner p-6">
+          <p className="text-center text-gray-400">Admin features coming soon...</p>
         </div>
-        
-        {activeTab === 'tasks' && (
-          <div className="card-modern clip-sharp p-6">
-            <h2 className="text-2xl font-bold mb-4 text-white">Task Management</h2>
-            <div className="space-y-3">
-              {tasks.map(task => (
-                <div key={task.id} className="bg-black/50 p-4 clip-corner flex justify-between items-center">
-                  <div>
-                    <h3 className="font-bold text-white">{task.title}</h3>
-                    <p className="text-sm text-[#FFB800]">{task.points} points</p>
-                  </div>
-                  <button className="btn-secondary px-4 py-2 clip-sharp">
-                    EDIT
-                  </button>
-                </div>
-              ))}
-              <button className="w-full py-3 border-2 border-dashed border-[#FFB800]/50 clip-sharp text-[#FFB800] hover:bg-[#FFB800]/10">
-                + ADD TASK
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'ugc' && (
-          <div className="card-modern clip-sharp p-6">
-            <h2 className="text-2xl font-bold mb-4 text-white">UGC Moderation</h2>
-            <div className="space-y-3">
-              {ugcSubmissions.filter(s => s.status === 'pending').map(sub => (
-                <div key={sub.id} className="bg-black/50 p-4 clip-corner">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-white">{sub.user}</h3>
-                      <p className="text-sm text-gray-400">{sub.type}</p>
-                    </div>
-                    <span className="px-3 py-1 bg-yellow-600/20 text-yellow-500 text-xs clip-sharp border border-yellow-600/50">PENDING</span>
-                  </div>
-                  <a href={sub.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-sm break-all hover:underline">
-                    {sub.url}
-                  </a>
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => approveSubmission(sub.id)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-600 clip-sharp hover:bg-green-700"
-                    >
-                      <Check size={18} />
-                      APPROVE
-                    </button>
-                    <button
-                      onClick={() => rejectSubmission(sub.id)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-600 clip-sharp hover:bg-red-700"
-                    >
-                      <X size={18} />
-                      REJECT
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'users' && (
-          <div className="card-modern clip-sharp p-6">
-            <h2 className="text-2xl font-bold mb-4 text-white">Top 100 Users</h2>
-            <div className="space-y-2">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="bg-black/50 p-4 clip-corner flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold text-gradient">#{i + 1}</span>
-                    <div>
-                      <h3 className="font-bold text-white">seeker_{1000 - i * 10}</h3>
-                      <p className="text-sm text-gray-400">Level {10 - i}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gradient">{(50000 - i * 5000).toLocaleString()}</p>
-                    <p className="text-sm text-gray-400">points</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'tape' && (
-          <div className="card-modern clip-sharp p-6">
-            <h2 className="text-2xl font-bold mb-4 text-white">Tape Configuration</h2>
-            <div className="space-y-4">
-              {[50, 100, 150, 200, 500, 1000].map(prize => (
-                <div key={prize} className="bg-black/50 p-4 clip-corner flex justify-between items-center">
-                  <span className="text-white">{prize} points</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    defaultValue="50"
-                    className="w-1/2"
-                  />
-                  <span className="text-gray-400">50%</span>
-                </div>
-              ))}
-              <button className="w-full py-3 btn-primary clip-sharp">
-                SAVE SETTINGS
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -685,6 +598,7 @@ export default function KabbalahCodeApp() {
   };
   
   const copyReferralLink = () => {
+    hapticFeedback('success');
     navigator.clipboard.writeText('t.me/kabbalah_bot?start=ref_12345');
   };
   
@@ -697,31 +611,36 @@ export default function KabbalahCodeApp() {
   }
   
   return (
-    <div className="min-h-screen bg-primary pb-24">
+    <div className="min-h-screen bg-black pb-24">
       <style>{styles}</style>
       
       {/* Header */}
-      <div className="bg-black/80 backdrop-blur-lg border-b border-[#FFB800]/20 p-4 sticky top-0 z-40">
+      <div className="bg-black/90 backdrop-blur-lg border-b border-[#FFB800]/20 p-4 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 clip-sharp bg-gradient-to-br from-[#FFB800] to-[#FF6B00] flex items-center justify-center">
+            <div className="w-14 h-14 sharp-corner flex items-center justify-center" style={{
+              background: 'linear-gradient(135deg, #FFB800 0%, #FF6B00 100%)'
+            }}>
               <Zap className="text-black" size={28} />
             </div>
             <div>
-              <h2 className="font-bold text-white text-lg">LEVEL {userData?.level || 1}</h2>
-              <div className="w-40 h-1.5 bg-gray-800 overflow-hidden">
+              <h2 className="font-black text-white text-lg">LEVEL {userData?.level || 1}</h2>
+              <div className="w-40 h-2 bg-gray-800 overflow-hidden mt-1">
                 <div 
-                  className="h-full bg-gradient-to-r from-[#FFB800] to-[#FF6B00]"
-                  style={{ width: `${((userData?.xp || 0) / (userData?.xpToNext || 1)) * 100}%` }}
+                  className="h-full transition-all duration-500"
+                  style={{
+                    width: `${((userData?.xp || 0) / (userData?.xpToNext || 1)) * 100}%`,
+                    background: 'linear-gradient(90deg, #FFB800 0%, #FF6B00 100%)'
+                  }}
                 />
               </div>
-              <p className="text-xs text-gray-400">{userData?.xp}/{userData?.xpToNext} XP</p>
+              <p className="text-xs text-gray-400 mt-1 font-medium">{userData?.xp}/{userData?.xpToNext} XP</p>
             </div>
           </div>
           
           <div className="text-right">
-            <p className="text-2xl font-bold text-gradient">{userData?.points?.toLocaleString() || 0}</p>
-            <p className="text-xs text-gray-400 uppercase">Points</p>
+            <p className="text-2xl font-black gradient-text">{userData?.points?.toLocaleString() || 0}</p>
+            <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Points</p>
           </div>
         </div>
       </div>
@@ -731,10 +650,10 @@ export default function KabbalahCodeApp() {
         {activeTab === 'home' && (
           <div className="space-y-6">
             <div className="text-center py-6">
-              <h1 className="title-font text-4xl mb-2">
-                <span className="text-gradient">YOUR RITUAL</span>
+              <h1 className="text-4xl font-black mb-2 gradient-text">
+                YOUR RITUAL
               </h1>
-              <p className="text-gray-400">Daily guidance from the mystic code</p>
+              <p className="text-gray-400 font-medium">Daily guidance from the mystic code</p>
             </div>
             <DailyPrediction onClaim={handleClaimPoints} />
           </div>
@@ -747,21 +666,22 @@ export default function KabbalahCodeApp() {
         )}
         
         {activeTab === 'referral' && (
-          <div className="card-modern clip-sharp p-6">
-            <h2 className="title-font text-2xl text-gradient mb-6 text-center">REFERRAL PROGRAM</h2>
+          <div className="card-glass sharp-corner p-6">
+            <h2 className="text-2xl font-black text-center mb-6 gradient-text">REFERRAL PROGRAM</h2>
             <div className="space-y-6">
-              <div className="bg-black/50 p-4 clip-corner">
-                <p className="text-center text-[#FFB800] mb-3 text-sm uppercase tracking-wider">Your Referral Link</p>
+              <div className="bg-black/50 p-4 sharp-corner">
+                <p className="text-center text-[#FFB800] mb-3 text-sm font-bold uppercase tracking-wider">Your Referral Link</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value="t.me/kabbalah_bot?start=ref_12345"
                     readOnly
-                    className="flex-1 bg-black/80 border border-[#FFB800]/30 px-4 py-3 text-white clip-corner"
+                    className="flex-1 bg-black/80 border border-[#FFB800]/30 sharp-corner px-4 py-3 text-white font-medium"
+                    style={{fontSize: '14px'}}
                   />
                   <button 
                     onClick={copyReferralLink}
-                    className="px-6 btn-primary clip-sharp"
+                    className="px-6 btn-gradient sharp-corner font-bold"
                   >
                     <Copy size={20} />
                   </button>
@@ -769,72 +689,50 @@ export default function KabbalahCodeApp() {
               </div>
               
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-black/50 p-4 clip-corner text-center">
-                  <p className="text-3xl font-bold text-gradient">{userData?.referrals || 0}</p>
-                  <p className="text-sm text-gray-400 mt-1">Referrals</p>
-                </div>
-                <div className="bg-black/50 p-4 clip-corner text-center">
-                  <p className="text-3xl font-bold text-[#FFB800]">10%</p>
-                  <p className="text-sm text-gray-400 mt-1">Level 1</p>
-                </div>
-                <div className="bg-black/50 p-4 clip-corner text-center">
-                  <p className="text-3xl font-bold text-[#FF6B00]">5%</p>
-                  <p className="text-sm text-gray-400 mt-1">Level 2</p>
-                </div>
-              </div>
-              
-              <div className="bg-black/50 p-4 clip-corner">
-                <h3 className="font-bold text-white mb-3 uppercase text-sm tracking-wider">How It Works</h3>
-                <ul className="space-y-2 text-sm text-gray-300">
-                  <li className="flex items-start gap-2">
-                    <Star className="text-[#FFB800] mt-0.5 flex-shrink-0" size={16} />
-                    <span><strong className="text-white">Level 1:</strong> Earn 10% of direct referrals' points</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Star className="text-[#FF6B00] mt-0.5 flex-shrink-0" size={16} />
-                    <span><strong className="text-white">Level 2:</strong> Earn 5% of 2nd-level referrals</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Star className="text-[#FF8C00] mt-0.5 flex-shrink-0" size={16} />
-                    <span><strong className="text-white">Level 3:</strong> Earn 2% of 3rd-level referrals</span>
-                  </li>
-                </ul>
+                {[
+                  {value: userData?.referrals || 0, label: 'Referrals'},
+                  {value: '10%', label: 'Level 1'},
+                  {value: '5%', label: 'Level 2'}
+                ].map((item, i) => (
+                  <div key={i} className="bg-black/50 p-4 sharp-corner text-center">
+                    <p className="text-3xl font-black gradient-text">{item.value}</p>
+                    <p className="text-sm text-gray-400 mt-1 font-medium">{item.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
         
         {activeTab === 'leaderboard' && (
-          <div className="card-modern clip-sharp p-6">
-            <h2 className="title-font text-2xl text-gradient mb-6 text-center">LEADERBOARD</h2>
+          <div className="card-glass sharp-corner p-6">
+            <h2 className="text-2xl font-black text-center mb-6 gradient-text">LEADERBOARD</h2>
             <div className="space-y-2">
               {[...Array(20)].map((_, i) => {
                 const isUser = i === 7;
                 return (
                   <div 
                     key={i} 
-                    className={`p-4 clip-corner flex items-center justify-between ${
-                      isUser ? 'bg-gradient-to-r from-[#FFB800]/20 to-[#FF6B00]/20 border border-[#FFB800]' : 'bg-black/50'
+                    className={`p-4 sharp-corner flex items-center justify-between ${
+                      isUser ? 'bg-gradient-to-r from-[#FFB800]/20 to-[#FF6B00]/20 border-2 border-[#FFB800]' : 'bg-black/50'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      {i < 3 ? (
-                        <Crown className={`${
-                          i === 0 ? 'text-[#FFD700]' : i === 1 ? 'text-[#C0C0C0]' : 'text-[#CD7F32]'
-                        }`} size={24} />
-                      ) : (
-                        <span className="text-xl font-bold text-gradient w-8 text-center">#{i + 1}</span>
-                      )}
+                      <span className="text-xl font-black w-8 text-center" style={{
+                        color: i < 3 ? '#FFB800' : '#666'
+                      }}>
+                        #{i + 1}
+                      </span>
                       <div>
                         <h3 className="font-bold text-white">
                           {isUser ? 'YOU' : `seeker_${1000 - i * 10}`}
                         </h3>
-                        <p className="text-sm text-gray-400">Level {Math.max(1, 20 - i)}</p>
+                        <p className="text-sm text-gray-400 font-medium">Level {Math.max(1, 20 - i)}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gradient">{(100000 - i * 5000).toLocaleString()}</p>
-                      <p className="text-sm text-gray-400">points</p>
+                      <p className="font-black gradient-text">{(100000 - i * 5000).toLocaleString()}</p>
+                      <p className="text-sm text-gray-400 font-medium">points</p>
                     </div>
                   </div>
                 );
@@ -847,7 +745,7 @@ export default function KabbalahCodeApp() {
       </div>
       
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-[#FFB800]/20">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-lg border-t border-[#FFB800]/20">
         <div className="max-w-6xl mx-auto flex justify-around py-2">
           {[
             { id: 'home', icon: Sparkles, label: 'Home' },
@@ -858,15 +756,18 @@ export default function KabbalahCodeApp() {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                hapticFeedback('light');
+                setActiveTab(tab.id);
+              }}
               className={`flex flex-col items-center gap-1 px-3 py-2 transition-all ${
                 activeTab === tab.id
                   ? 'text-[#FFB800]'
                   : 'text-gray-500 hover:text-[#FFB800]'
               }`}
             >
-              <tab.icon size={22} />
-              <span className="text-xs font-semibold">{tab.label}</span>
+              <tab.icon size={22} strokeWidth={2.5} />
+              <span className="text-xs font-bold">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -874,39 +775,47 @@ export default function KabbalahCodeApp() {
       
       {/* Admin Access Button */}
       <button
-        onClick={() => setShowAdminPrompt(true)}
-        className="fixed bottom-20 right-4 w-12 h-12 bg-gradient-to-br from-[#FFB800] to-[#FF6B00] clip-sharp flex items-center justify-center shadow-lg hover:shadow-[#FFB800]/50 transition-all"
+        onClick={() => {
+          hapticFeedback('medium');
+          setShowAdminPrompt(true);
+        }}
+        className="fixed bottom-20 right-4 w-14 h-14 sharp-corner flex items-center justify-center shadow-lg"
+        style={{
+          background: 'linear-gradient(135deg, #FFB800 0%, #FF6B00 100%)',
+          boxShadow: '0 10px 30px rgba(255, 184, 0, 0.3)'
+        }}
       >
-        <Settings size={20} className="text-black" />
+        <Settings size={24} className="text-black" />
       </button>
       
       {/* Admin Prompt */}
       {showAdminPrompt && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-          <div className="card-modern clip-sharp p-6 max-w-md w-full">
-            <h3 className="title-font text-2xl text-gradient mb-4">ADMIN ACCESS</h3>
+          <div className="card-glass sharp-corner p-6 max-w-md w-full">
+            <h3 className="text-2xl font-black gradient-text mb-4">ADMIN ACCESS</h3>
             <input
               type="password"
               value={adminToken}
               onChange={(e) => setAdminToken(e.target.value)}
               placeholder="Enter secret token"
-              className="w-full bg-black/80 border border-[#FFB800]/30 clip-corner px-4 py-3 text-white focus:border-[#FFB800] mb-4"
+              className="w-full bg-black/80 border-2 border-[#FFB800]/30 sharp-corner px-4 py-4 text-white font-medium focus:border-[#FFB800] mb-4"
+              style={{fontSize: '16px'}}
             />
             <div className="flex gap-3">
               <button
                 onClick={() => setShowAdminPrompt(false)}
-                className="flex-1 btn-secondary py-3 clip-sharp"
+                className="flex-1 btn-outline sharp-corner py-3 text-base font-bold"
               >
                 CANCEL
               </button>
               <button
                 onClick={checkAdminAccess}
-                className="flex-1 btn-primary py-3 clip-sharp"
+                className="flex-1 btn-gradient sharp-corner py-3 text-base font-bold"
               >
                 LOGIN
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-3 text-center">
+            <p className="text-xs text-gray-500 mt-3 text-center font-medium">
               Hint: KABBALAH_ADMIN_2025
             </p>
           </div>
