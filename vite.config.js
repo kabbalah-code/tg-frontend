@@ -22,7 +22,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false, // Disable sourcemaps in production
-    minify: 'terser',
+    minify: 'esbuild', // Use esbuild instead of terser (faster, no extra deps)
     
     // Optimize chunks for better loading
     rollupOptions: {
@@ -38,16 +38,9 @@ export default defineConfig({
       }
     },
     
-    // Terser compression settings
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.logs in production
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug']
-      },
-      format: {
-        comments: false // Remove comments
-      }
+    // esbuild minification options
+    esbuild: {
+      drop: ['console', 'debugger'], // Remove console.logs and debuggers
     },
     
     // Asset optimization
