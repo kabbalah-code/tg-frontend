@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Kabbalah Code - Mystical Web3 Telegram Mini App",
+  "author": "Kabbalah Code Team",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,8 +15,7 @@
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "lucide-react": "^0.263.1",
-    "@twa-dev/sdk": "^7.0.0"
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
