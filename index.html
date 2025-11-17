@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
     
     <!-- Telegram Mini App Meta Tags -->
     <meta name="telegram-app" content="true" />
@@ -13,8 +13,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Kabbalah Code" />
-    <meta property="og:description" content="Mystical Web3 Predictions & Rewards" />
+    <meta property="og:title" content="Kabbalah Code - Mystical Web3" />
+    <meta property="og:description" content="Daily mystical predictions, fortune tape spins, and Web3 rewards" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/og-image.png" />
     
@@ -26,11 +26,8 @@
     
     <title>Kabbalah Code - Mystical Web3</title>
     
-    <!-- Telegram Web App Script -->
+    <!-- Telegram Web App Script - REQUIRED for Mini Apps -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Preconnect to API -->
-    <link rel="preconnect" href="https://kabbalah-code-api.onrender.com" />
     
     <style>
       /* Prevent any unwanted scrolling/zooming on mobile */
@@ -41,6 +38,12 @@
         user-select: none;
       }
       
+      /* Allow text selection for inputs */
+      input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      
       body {
         margin: 0;
         padding: 0;
@@ -49,6 +52,7 @@
         position: fixed;
         width: 100%;
         height: 100%;
+        background: #0a0a0a;
       }
       
       #root {
@@ -59,35 +63,77 @@
         -webkit-overflow-scrolling: touch;
       }
       
-      /* Loading screen */
+      /* Loading screen with mystical animation */
       #loading {
         position: fixed;
         inset: 0;
-        background: #0a0a0a;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         z-index: 9999;
       }
       
+      .loading-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+        filter: drop-shadow(0 0 30px rgba(255, 184, 0, 0.6));
+        animation: float 3s ease-in-out infinite;
+      }
+      
       .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(255, 184, 0, 0.2);
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 184, 0, 0.1);
         border-top-color: #FFB800;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
       
+      .loading-text {
+        margin-top: 20px;
+        color: #FFB800;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      
       @keyframes spin {
         to { transform: rotate(360deg); }
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
       }
     </style>
   </head>
   <body>
     <!-- Loading Screen -->
     <div id="loading">
+      <!-- Lightning bolt icon as logo -->
+      <svg class="loading-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="url(#gradient)" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="gradient" x1="3" y1="2" x2="13" y2="22" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFB800"/>
+            <stop offset="100%" stop-color="#FF6B00"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      
       <div class="loading-spinner"></div>
+      <div class="loading-text">Connecting...</div>
     </div>
     
     <!-- React Root -->
@@ -95,17 +141,24 @@
     
     <!-- Initialize Telegram Web App -->
     <script>
-      // Expand the Mini App to full height
+      // Expand the Mini App to full height immediately
       if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
+        const tg = window.Telegram.WebApp;
         
-        // Set theme
-        window.Telegram.WebApp.setHeaderColor('#0a0a0a');
-        window.Telegram.WebApp.setBackgroundColor('#0a0a0a');
+        // Notify Telegram that app is ready
+        tg.ready();
+        
+        // Expand to full viewport
+        tg.expand();
+        
+        // Set theme colors
+        tg.setHeaderColor('#0a0a0a');
+        tg.setBackgroundColor('#0a0a0a');
         
         // Enable closing confirmation
-        window.Telegram.WebApp.enableClosingConfirmation();
+        tg.enableClosingConfirmation();
+        
+        console.log('🔮 Telegram WebApp pre-initialized');
       }
       
       // Remove loading screen after app loads
@@ -114,13 +167,37 @@
           const loading = document.getElementById('loading');
           if (loading) {
             loading.style.opacity = '0';
-            loading.style.transition = 'opacity 0.3s';
-            setTimeout(() => loading.remove(), 300);
+            loading.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(() => {
+              loading.remove();
+              console.log('✨ Loading screen removed');
+            }, 500);
           }
-        }, 500);
+        }, 800); // Show loading for at least 800ms
       });
+      
+      // Error handling
+      window.addEventListener('error', (event) => {
+        console.error('❌ Global error:', event.error);
+      });
+      
+      // Prevent pull-to-refresh
+      document.body.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 1) return;
+        const target = e.target;
+        if (target.closest('#root')) {
+          const scrollable = target.closest('[style*="overflow"]') || target.closest('[class*="scroll"]');
+          if (!scrollable || scrollable.scrollTop > 0) {
+            return;
+          }
+          if (e.touches[0].clientY > e.touches[0].target.getBoundingClientRect().top) {
+            e.preventDefault();
+          }
+        }
+      }, { passive: false });
     </script>
     
+    <!-- Load React App -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
