@@ -31,6 +31,15 @@ const styles = `
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #root {
+    width: 100%;
+    min-height: 100vh;
   }
   
   .gradient-text {
@@ -225,9 +234,17 @@ const Onboarding = ({ onComplete }) => {
   };
   
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+      background: '#000'
+    }}>
       <style>{styles}</style>
-      <div className="max-w-md w-full">
+      <div style={{maxWidth: '448px', width: '100%'}}>
         {/* Logo */}
         <div className="text-center mb-12 animate-float">
           <Zap className="w-20 h-20 mx-auto mb-6" style={{
