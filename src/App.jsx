@@ -246,28 +246,43 @@ const Onboarding = ({ onComplete }) => {
       <style>{styles}</style>
       <div style={{maxWidth: '448px', width: '100%'}}>
         {/* Logo */}
-        <div className="text-center mb-12 animate-float">
-          <Zap className="w-20 h-20 mx-auto mb-6" style={{
+        <div style={{textAlign: 'center', marginBottom: '48px'}} className="animate-float">
+          <Zap style={{
+            width: '80px',
+            height: '80px',
+            margin: '0 auto 24px',
             filter: 'drop-shadow(0 0 30px rgba(255, 184, 0, 0.8))',
             color: '#FFB800'
           }} />
-          <h1 className="text-5xl font-black mb-2 gradient-text" style={{letterSpacing: '-0.02em'}}>
+          <h1 style={{
+            fontSize: '48px',
+            fontWeight: 900,
+            marginBottom: '8px',
+            letterSpacing: '-0.02em'
+          }} className="gradient-text">
             KABBALAH
           </h1>
-          <h2 className="text-3xl font-black text-white" style={{letterSpacing: '-0.01em'}}>
+          <h2 style={{
+            fontSize: '32px',
+            fontWeight: 900,
+            color: '#fff',
+            letterSpacing: '-0.01em'
+          }}>
             CODE
           </h2>
-          <p className="text-gray-400 mt-3 text-sm">Mystical Web3 Rewards</p>
+          <p style={{color: '#9ca3af', marginTop: '12px', fontSize: '14px'}}>Mystical Web3 Rewards</p>
         </div>
         
-        <div className="card-glass sharp-corner p-8">
+        <div className="card-glass sharp-corner" style={{padding: '32px'}}>
           {/* Progress */}
-          <div className="flex gap-2 mb-8">
+          <div style={{display: 'flex', gap: '8px', marginBottom: '32px'}}>
             {[1, 2].map(i => (
               <div
                 key={i}
-                className="h-1 flex-1 transition-all duration-300"
                 style={{
+                  height: '4px',
+                  flex: 1,
+                  transition: 'all 0.3s',
                   background: i <= step 
                     ? 'linear-gradient(90deg, #FFB800 0%, #FF6B00 100%)' 
                     : 'rgba(255, 255, 255, 0.1)'
@@ -587,14 +602,54 @@ export default function KabbalahCodeApp() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
-  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
-  const [adminToken, setAdminToken] = useState('');
   
   useEffect(() => {
-    API.getUserData().then(setUserData);
+    // Get Telegram user info
+    const telegramUser = getTelegramUser();
+    
+    if (telegramUser?.id) {
+      // Check if user exists in backend
+      const apiUrl = window.VITE_API_URL || 'http://localhost:8000/api';
+      
+      fetch(`${apiUrl}/user/profile?telegram_id=${telegramUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.evm_address) {
+            setIsOnboarded(true);
+            setUserData(data);
+          }
+        })
+        .catch(() => {
+          // User not found, show onboarding
+          setIsOnboarded(false);
+        });
+    }
+    
+    // Check for admin command
+    const tg = getTelegramWebApp();
+    if (tg?.initDataUnsafe?.start_param === 'admin') {
+      setIsAdmin(true);
+    }
   }, []);
   
-  const handleOnboardingComplete = (data) => {
+  const handleOnboardingComplete = async (data) => {
+    const telegramUser = getTelegramUser();
+    const apiUrl = window.VITE_API_URL || 'http://localhost:8000/api';
+    
+    // Send to backend
+    const response = await fetch(`${apiUrl}/auth/onboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegram_id: telegramUser?.id,
+        username: telegramUser?.username,
+        evm_address: data.evmAddress,
+        twitter_username: data.twitterUsername
+      })
+    });
+    
+    const userData = await response.json();
+    setUserData(userData);
     setIsOnboarded(true);
   };
   
@@ -602,16 +657,8 @@ export default function KabbalahCodeApp() {
     setUserData(prev => ({ ...prev, points: prev.points + points }));
   };
   
-  const checkAdminAccess = () => {
-    if (adminToken === 'KABBALAH_ADMIN_2025') {
-      setIsAdmin(true);
-      setShowAdminPrompt(false);
-    }
-  };
-  
   const handleAdminLogout = () => {
     setIsAdmin(false);
-    setAdminToken('');
   };
   
   const copyReferralLink = () => {
@@ -665,19 +712,18 @@ export default function KabbalahCodeApp() {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto p-4">
         {activeTab === 'home' && (
-          <div className="space-y-6">
-            <div className="text-center py-6">
-              <h1 className="text-4xl font-black mb-2 gradient-text">
+          <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+            <div style={{textAlign: 'center', paddingTop: '24px'}}>
+              <h1 style={{fontSize: '36px', fontWeight: 900, marginBottom: '8px'}} className="gradient-text">
                 YOUR RITUAL
               </h1>
-              <p className="text-gray-400 font-medium">Daily guidance from the mystic code</p>
+              <p style={{color: '#9ca3af', fontWeight: 500}}>Daily guidance from the mystic code</p>
             </div>
+            
+            {/* Daily Prediction */}
             <DailyPrediction onClaim={handleClaimPoints} />
-          </div>
-        )}
-        
-        {activeTab === 'tape' && (
-          <div className="py-8">
+            
+            {/* Fortune Tape */}
             <RunningTape onSpin={handleClaimPoints} />
           </div>
         )}
@@ -759,6 +805,44 @@ export default function KabbalahCodeApp() {
         )}
         
         {activeTab === 'faq' && <FAQ />}
+        
+        {activeTab === 'tasks' && (
+          <div className="card-glass sharp-corner" style={{padding: '24px'}}>
+            <h2 style={{fontSize: '24px', fontWeight: 900, textAlign: 'center', marginBottom: '24px'}} className="gradient-text">
+              TASKS
+            </h2>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+              {[
+                { title: 'Join Telegram Channel', points: 100, icon: '📢', action: 'https://t.me/your_channel' },
+                { title: 'Join Telegram Chat', points: 50, icon: '💬', action: 'https://t.me/your_chat' },
+                { title: 'Follow on Twitter', points: 150, icon: '🐦', action: 'https://twitter.com/your_account' },
+                { title: 'Like Tweet', points: 50, icon: '❤️', action: 'https://twitter.com/status/xxx' },
+                { title: 'Retweet', points: 100, icon: '🔄', action: 'https://twitter.com/status/xxx' },
+                { title: 'Comment on Tweet', points: 200, icon: '💭', action: 'https://twitter.com/status/xxx' }
+              ].map((task, i) => (
+                <div key={i} className="card-glass sharp-corner" style={{padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                    <span style={{fontSize: '24px'}}>{task.icon}</span>
+                    <div>
+                      <h3 style={{fontWeight: 700, color: '#fff', marginBottom: '4px'}}>{task.title}</h3>
+                      <p style={{fontSize: '12px', color: '#FFB800', fontWeight: 600}}>+{task.points} points</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      hapticFeedback('light');
+                      window.open(task.action, '_blank');
+                    }}
+                    className="btn-gradient sharp-corner"
+                    style={{padding: '8px 16px', fontSize: '14px', fontWeight: 700}}
+                  >
+                    GO
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Bottom Navigation */}
@@ -766,10 +850,10 @@ export default function KabbalahCodeApp() {
         <div className="max-w-6xl mx-auto flex justify-around py-2">
           {[
             { id: 'home', icon: Sparkles, label: 'Home' },
-            { id: 'tape', icon: Zap, label: 'Tape' },
+            { id: 'tasks', icon: Trophy, label: 'Tasks' },
             { id: 'referral', icon: Users, label: 'Referral' },
             { id: 'leaderboard', icon: TrendingUp, label: 'Leaders' },
-            { id: 'faq', icon: HelpCircle, label: 'FAQ' }
+            { id: 'profile', icon: Star, label: 'Profile' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -789,55 +873,6 @@ export default function KabbalahCodeApp() {
           ))}
         </div>
       </div>
-      
-      {/* Admin Access Button */}
-      <button
-        onClick={() => {
-          hapticFeedback('medium');
-          setShowAdminPrompt(true);
-        }}
-        className="fixed bottom-20 right-4 w-14 h-14 sharp-corner flex items-center justify-center shadow-lg"
-        style={{
-          background: 'linear-gradient(135deg, #FFB800 0%, #FF6B00 100%)',
-          boxShadow: '0 10px 30px rgba(255, 184, 0, 0.3)'
-        }}
-      >
-        <Settings size={24} className="text-black" />
-      </button>
-      
-      {/* Admin Prompt */}
-      {showAdminPrompt && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-          <div className="card-glass sharp-corner p-6 max-w-md w-full">
-            <h3 className="text-2xl font-black gradient-text mb-4">ADMIN ACCESS</h3>
-            <input
-              type="password"
-              value={adminToken}
-              onChange={(e) => setAdminToken(e.target.value)}
-              placeholder="Enter secret token"
-              className="w-full bg-black/80 border-2 border-[#FFB800]/30 sharp-corner px-4 py-4 text-white font-medium focus:border-[#FFB800] mb-4"
-              style={{fontSize: '16px'}}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAdminPrompt(false)}
-                className="flex-1 btn-outline sharp-corner py-3 text-base font-bold"
-              >
-                CANCEL
-              </button>
-              <button
-                onClick={checkAdminAccess}
-                className="flex-1 btn-gradient sharp-corner py-3 text-base font-bold"
-              >
-                LOGIN
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-3 text-center font-medium">
-              Hint: KABBALAH_ADMIN_2025
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
